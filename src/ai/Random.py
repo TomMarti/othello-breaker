@@ -1,14 +1,15 @@
-''' Example of a random AI. The class name has to be the same as the module name.
-'''
+""" Example of a random AI. The class name has to be the same as the module name.
+"""
 
-from __future__ import annotations # postpones the evaluation of the type hints, hence they do not need to be imported
+from __future__ import (
+    annotations,
+)  # postpones the evaluation of the type hints, hence they do not need to be imported
 import random
+import othello
 
 
 class Random:
-    '''The name of this class must be the same as its file.
-    
-    '''
+    """The name of this class must be the same as its file."""
 
     def __init__(self):
         pass
@@ -24,6 +25,8 @@ class Random:
         """
 
         legal_moves = board.get_possible_move()
+        print(board.get_board())
+        print(legal_moves)
         return random.choice(legal_moves)
 
     def __str__(self):
