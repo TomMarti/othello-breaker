@@ -1,5 +1,4 @@
-""" Example of a random AI. The class name has to be the same as the module name.
-"""
+"""Example of a random AI. The class name has to be the same as the module name."""
 
 from __future__ import (
     annotations,
