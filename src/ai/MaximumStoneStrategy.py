@@ -6,11 +6,12 @@ from __future__ import (
 )  # postpones the evaluation of the type hints, hence they do not need to be imported
 import numpy as np
 import othello
+import sys
 
 MAX_DEPTH = 5
 
 
-class Da_Silva_Marti_Ruhoff:
+class MaximumStoneStrategy:
     """The name of this class must be the same as its file."""
 
     def __init__(self):
@@ -25,8 +26,13 @@ class Da_Silva_Marti_Ruhoff:
         Returns:
             tuple[int, int]: the next move (for instance: (2, 3) for (row, column), starting from 0)
         """
-        test0, test1 = self.go_down(0, board.copy_game(), board.get_turn())
-        print(test0, test1)
+        test0, test1 = self.go_down(
+            0,
+            board.copy_game(),
+            board.get_turn(),
+            -sys.maxsize,
+            sys.maxsize,
+        )
         return test1
 
     def evaluate(self, board: othello.OthelloGame, turn: str):
@@ -46,23 +52,53 @@ class Da_Silva_Marti_Ruhoff:
         depth: int,
         game: othello.OthelloGame,
         turn: str,
+        alpha: int,
+        beta: int,
         move: tuple[int, int] = None,
     ) -> (int, tuple[int, int]):  # type: ignore
         if depth > MAX_DEPTH and move is not None:
             game.move(move[0], move[1])
             return (self.evaluate(game.get_board(), turn), move)
 
-        value = []
         new_depth = depth + 1
-        for move in game.get_possible_move():
-            value.append(
-                self.go_down(new_depth, game.copy_game(), self.update_turn(turn), move)
-            )
-        value.sort(key=lambda x: x[0])
-        if depth % 2 == 0:
-            return value[-1]
+        return_move = None
+
+        if depth % 2 == 1:
+            value = sys.maxsize
+            for move in game.get_possible_move():
+                result, _ = self.go_down(
+                    new_depth,
+                    game.copy_game(),
+                    self.update_turn(turn),
+                    alpha,
+                    beta,
+                    move,
+                )
+                if value > result:
+                    return_move = move
+                    value = result
+
+                if alpha >= value:
+                    return (value, return_move)
+                beta = min(beta, value)
         else:
-            return value[0]
+            value = -sys.maxsize
+            for move in game.get_possible_move():
+                result, _ = self.go_down(
+                    new_depth,
+                    game.copy_game(),
+                    self.update_turn(turn),
+                    alpha,
+                    beta,
+                    move,
+                )
+                if value < result:
+                    return_move = move
+                    value = result
+                if beta <= value:
+                    return (value, return_move)
+                alpha = max(alpha, value)
+        return (value, return_move)
 
     def update_turn(slef, turn):
         if turn == othello.BLACK:
