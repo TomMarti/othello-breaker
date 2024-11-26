@@ -74,25 +74,25 @@ class MaximumStoneStrategyOptimized:
 
         work_board = board.get_board()
         current_player = board.turn
-        opponent = 'W'
-        if current_player == 'W':
-            opponent = 'B'
+        opponent = "W"
+        if current_player == "W":
+            opponent = "B"
 
-        value = 0 # The placed piece is not counted, change to one for that
+        value = 0  # The placed piece is not counted, change to one for that
 
         for counter in range(0, 8):
             x, y = self.next_direction_to_check(counter)
             base_position_x = move[0]
             base_position_y = move[1]
             value_to_maybe_add = 0
-            
+
             next_x = base_position_x
             next_y = base_position_y
 
             while True:
                 next_x = next_x + x
                 next_y = next_y + y
-                
+
                 try:
                     color_next_case = work_board[next_x][next_y]
                     if color_next_case == current_player:
@@ -100,7 +100,7 @@ class MaximumStoneStrategyOptimized:
                         break
                     elif color_next_case == opponent:
                         value_to_maybe_add += 1
-                    elif color_next_case == '.':
+                    elif color_next_case == ".":
                         break
                 except IndexError:
                     # Out of bound, no gain
@@ -117,7 +117,10 @@ class MaximumStoneStrategyOptimized:
         beta: int,
         move: tuple[int, int] = None,
     ) -> (int, tuple[int, int]):  # type: ignore
-        if depth > MAX_DEPTH and move is not None:
+        if move is not None:
+            game.move(move[0], move[1])
+
+        if depth > MAX_DEPTH:
             return (self.move_value(game, move), move)
 
         new_depth = depth + 1
