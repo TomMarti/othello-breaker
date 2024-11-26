@@ -9,7 +9,16 @@ import othello
 import sys
 
 MAX_DEPTH = 5
-
+MOVES = {
+    0: (0, 1),
+    1: (1, 1),
+    2: (1, 0),
+    3: (1, -1),
+    4: (0, -1),
+    5: (-1, -1),
+    6: (-1, 0),
+    7: (-1, 1)
+}
 
 class MaximumStoneStrategyOptimized:
     """The name of this class must be the same as its file."""
@@ -51,21 +60,11 @@ class MaximumStoneStrategyOptimized:
         """
         Utility method for move_value() function, private use
         """
-        moves = {
-            0: (0, 1),
-            1: (1, 1),
-            2: (1, 0),
-            3: (1, -1),
-            4: (0, -1),
-            5: (-1, -1),
-            6: (-1, 0),
-            7: (-1, 1)
-        }
 
-        if counter not in moves:
+        if counter not in MOVES:
             raise IndexError('Illegal Counter')
             
-        direction = moves[counter]
+        direction = MOVES[counter]
         return direction[0], direction[1]
 
     def move_value(self, board: othello.OthelloGame, move: tuple[int, int]) -> int:
