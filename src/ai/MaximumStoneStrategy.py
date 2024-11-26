@@ -38,11 +38,11 @@ class MaximumStoneStrategy:
     def evaluate(self, board: othello.OthelloGame, turn: str):
         value = {othello.BLACK: 0, othello.WHITE: 0, othello.NONE: 0}
 
-        test = np.array(board).flatten()
+        test = np.array(board.get_board()).flatten()
         for x in test:
             value[x] += 1
 
-        if turn == othello.BLACK:
+        if board.get_turn() == othello.BLACK:
             return value["B"] - value["W"]
         else:
             return value["W"] - value["B"]
@@ -56,9 +56,11 @@ class MaximumStoneStrategy:
         beta: int,
         move: tuple[int, int] = None,
     ) -> (int, tuple[int, int]):  # type: ignore
-        if depth > MAX_DEPTH and move is not None:
+        if move is not None:
             game.move(move[0], move[1])
-            return (self.evaluate(game.get_board(), turn), move)
+
+        if depth > MAX_DEPTH:
+            return (self.evaluate(game, turn), move)
 
         new_depth = depth + 1
         return_move = None
