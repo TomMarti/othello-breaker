@@ -141,7 +141,7 @@ class Strategist:
         new_depth = depth + 1
         return_move = None
 
-        is_maximising = depth % 2 == 0
+        is_maximising = game.get_turn() == player
         best_value = -sys.maxsize if is_maximising else sys.maxsize
 
         for move in game.get_possible_move():
