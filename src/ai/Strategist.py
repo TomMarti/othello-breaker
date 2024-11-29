@@ -6,7 +6,6 @@ from __future__ import (
 import othello
 import sys
 import numpy as np
-import time
 
 MAX_DEPTH = 5
 AVOIDED_CASE = [(1, 1), (7, 1), (1, 5), (7, 5)]
@@ -31,15 +30,7 @@ CORNER_DIAG = {
 CACHE = {}
 
 
-class NoneCell(Exception):
-    """Raised whenever a cell is None"""
-
-    pass
-
-
 class Strategist:
-    """The name of this class must be the same as its file."""
-
     def __init__(self):
         pass
 
@@ -53,11 +44,8 @@ class Strategist:
                         return 1
         return 0
 
-    def current_stat_to_string(self, board, move, turn) -> str:
-        string = ""
-        for x in np.array(board).flatten():
-            string += x
-        return string + str(move) + turn
+    def current_state_to_string(self, board, move, turn) -> str:
+        return "".join(sum(board, []) + [str(move), turn])
 
     def get_border_value(self, game: othello.OthelloGame, player: str):
         value = 0
@@ -70,6 +58,9 @@ class Strategist:
         return value
 
     def get_other(self, player_turn: str) -> str:
+        """
+        TODO: If not used in final version, remove it
+        """
         return othello.BLACK if player_turn == othello.WHITE else othello.WHITE
 
     def get_stable_piece(self, game: othello.OthelloGame, player: str):
@@ -165,8 +156,7 @@ class Strategist:
     def evaluate(
         self, game: othello.OthelloGame, move, player_move, player, turn_number=0
     ) -> float:
-
-        current_state_hash = self.current_stat_to_string(
+        current_state_hash = self.current_state_to_string(
             game.get_board(), move, player_move
         )
 
