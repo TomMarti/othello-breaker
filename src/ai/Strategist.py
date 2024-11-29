@@ -131,7 +131,7 @@ class Strategist:
         player: str,
         move: tuple[int, int] = None,
         turn_number: int = 0,
-    ) -> (int, tuple[int, int]):  # type: ignore
+    ) -> tuple[int, tuple[int, int]]:
         if move is not None:
             game.move(move[0], move[1])
 
@@ -141,44 +141,35 @@ class Strategist:
         new_depth = depth + 1
         return_move = None
 
-        if depth % 2 == 1:
-            value = sys.maxsize
-            for move in game.get_possible_move():
-                result, _ = self.alpha_beta(
-                    new_depth,
-                    game.copy_game(),
-                    alpha,
-                    beta,
-                    player,
-                    move,
-                    turn_number=turn_number + 1,
-                )
-                if value > result:
-                    return_move = move
-                    value = result
+        is_maximising = depth % 2 == 0
+        best_value = -sys.maxsize if is_maximising else sys.maxsize
 
-                if alpha >= value:
-                    return (value, return_move)
-                beta = min(beta, value)
-        else:
-            value = -sys.maxsize
-            for move in game.get_possible_move():
-                result, _ = self.alpha_beta(
-                    new_depth,
-                    game.copy_game(),
-                    alpha,
-                    beta,
-                    player,
-                    move,
-                    turn_number=turn_number + 1,
-                )
-                if value < result:
+        for move in game.get_possible_move():
+            result, _ = self.alpha_beta(
+                new_depth,
+                game.copy_game(),
+                alpha,
+                beta,
+                player,
+                move,
+                turn_number=turn_number + 1,
+            )
+
+            if is_maximising:
+                if best_value < result:
                     return_move = move
-                    value = result
-                if beta <= value:
-                    return (value, return_move)
-                alpha = max(alpha, value)
-        return (value, return_move)
+                    best_value = result
+                if beta <= best_value:
+                    return (best_value, return_move)
+                alpha = max(alpha, best_value)
+            else:
+                if best_value > result:
+                    return_move = move
+                    best_value = result
+                if alpha >= best_value:
+                    return (best_value, return_move)
+                beta = min(beta, best_value)
+        return (best_value, return_move)
 
     def update_turn(slef, turn):
         if turn == othello.BLACK:
