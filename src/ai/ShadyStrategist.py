@@ -30,7 +30,9 @@ CORNER_DIAG = {
 CACHE = {}
 
 
-class Strategist:
+class ShadyStrategist:
+    """The name of this class must be the same as its file."""
+
     def __init__(self):
         pass
 
@@ -44,8 +46,11 @@ class Strategist:
                         return 1
         return 0
 
-    def current_state_to_string(self, board, move, turn) -> str:
-        return "".join(sum(board, []) + [str(move), turn])
+    def current_stat_to_string(self, board, move, turn) -> str:
+        string = ""
+        for x in np.array(board).flatten():
+            string += x
+        return string + str(move) + turn
 
     def get_border_value(self, game: othello.OthelloGame, player: str):
         value = 0
@@ -58,12 +63,10 @@ class Strategist:
         return value
 
     def get_other(self, player_turn: str) -> str:
-        """
-        TODO: If not used in final version, remove it
-        """
         return othello.BLACK if player_turn == othello.WHITE else othello.WHITE
 
     def get_stable_piece(self, game: othello.OthelloGame, player: str):
+
         board = game.get_board()
         board_len = len(board)
         stable = np.full((board_len, len(board[-1])), False, dtype=bool)
@@ -139,7 +142,7 @@ class Strategist:
 
         player = board.get_turn()
         possible_moves = set(board.get_possible_move())
-        print(f"Strategist : {possible_moves}")
+        print(f"Shady Strategist : {possible_moves}")
         if len(possible_moves) > 1:
             _, move = self.alpha_beta(
                 0,
@@ -155,20 +158,27 @@ class Strategist:
     def evaluate(
         self, game: othello.OthelloGame, move, player_move, player, turn_number=0
     ) -> float:
-        current_state_hash = self.current_state_to_string(
+
+        current_state_hash = self.current_stat_to_string(
             game.get_board(), move, player_move
         )
 
         if current_state_hash in CACHE:
             return CACHE[current_state_hash]
 
-        mobility_value = len(set(game.get_possible_move()))
-        border_piece = self.get_border_value(game, player)
+        if game.get_turn() == player:
+            mobility_value = -len(set(game.get_possible_move()))
+        else:
+            mobility_value = len(set(game.get_possible_move()))
+
+        # border_piece = self.get_border_value(game, player)
         stable_piece = self.get_stable_piece(game, player)
         # if turn_number < 7:
         #     value = mobility_value * 20 + 1 / (1 + border_piece) + stable_piece * 10
         # else:
-        value = stable_piece  # mobility_value + 1 / (1 + border_piece) +
+        value = (
+            stable_piece * 2 - mobility_value
+        )  # mobility_value + 1 / (1 + border_piece) +
 
         CACHE[current_state_hash] = value
         return value
@@ -204,7 +214,7 @@ class Strategist:
 
         is_maximising = game.get_turn() == player
         best_value = -sys.maxsize if is_maximising else sys.maxsize
-        # print(f"Alpha-beta strategist :{game.get_possible_move()}")
+
         for move in game.get_possible_move():
             result, _ = self.alpha_beta(
                 new_depth,
@@ -239,4 +249,4 @@ class Strategist:
             return othello.BLACK
 
     def __str__(self):
-        return "Strategist"
+        return "ShadyStrategist "
