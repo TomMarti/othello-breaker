@@ -17,8 +17,9 @@ MOVES = {
     4: (0, -1),
     5: (-1, -1),
     6: (-1, 0),
-    7: (-1, 1)
+    7: (-1, 1),
 }
+
 
 class MaximumStoneStrategyOptimized:
     """The name of this class must be the same as its file."""
@@ -35,14 +36,19 @@ class MaximumStoneStrategyOptimized:
         Returns:
             tuple[int, int]: the next move (for instance: (2, 3) for (row, column), starting from 0)
         """
-        test0, test1 = self.go_down(
-            0,
-            board.copy_game(),
-            board.get_turn(),
-            -sys.maxsize,
-            sys.maxsize,
-        )
-        return test1
+        possible_moves = set(board.get_possible_move())
+        print(f"Maximum Stone Optimized: {possible_moves}")
+        if len(possible_moves) > 1:
+            _, move = self.alpha_beta(
+                0,
+                board.copy_game(),
+                board.get_turn(),
+                -sys.maxsize,
+                sys.maxsize,
+            )
+            return move
+        else:
+            board.get_possible_move()[0]
 
     def evaluate(self, board: othello.OthelloGame, turn: str):
         value = {othello.BLACK: 0, othello.WHITE: 0, othello.NONE: 0}
@@ -62,8 +68,8 @@ class MaximumStoneStrategyOptimized:
         """
 
         if counter not in MOVES:
-            raise IndexError('Illegal Counter')
-            
+            raise IndexError("Illegal Counter")
+
         direction = MOVES[counter]
         return direction[0], direction[1]
 
@@ -108,7 +114,7 @@ class MaximumStoneStrategyOptimized:
 
         return value
 
-    def go_down(
+    def alpha_beta(
         self,
         depth: int,
         game: othello.OthelloGame,
@@ -129,7 +135,7 @@ class MaximumStoneStrategyOptimized:
         if depth % 2 == 1:
             value = sys.maxsize
             for move in game.get_possible_move():
-                result, _ = self.go_down(
+                result, _ = self.alpha_beta(
                     new_depth,
                     game.copy_game(),
                     self.update_turn(turn),
@@ -147,7 +153,7 @@ class MaximumStoneStrategyOptimized:
         else:
             value = -sys.maxsize
             for move in game.get_possible_move():
-                result, _ = self.go_down(
+                result, _ = self.alpha_beta(
                     new_depth,
                     game.copy_game(),
                     self.update_turn(turn),
@@ -170,4 +176,4 @@ class MaximumStoneStrategyOptimized:
             return othello.BLACK
 
     def __str__(self):
-        return "Da_Silva_Marti_Ruhoff"
+        return "Maximum Stone strategy"

@@ -26,14 +26,19 @@ class MaximumStoneStrategy:
         Returns:
             tuple[int, int]: the next move (for instance: (2, 3) for (row, column), starting from 0)
         """
-        test0, test1 = self.go_down(
-            0,
-            board.copy_game(),
-            board.get_turn(),
-            -sys.maxsize,
-            sys.maxsize,
-        )
-        return test1
+        possible_moves = set(board.get_possible_move())
+        print(f"Maximum Stone : {possible_moves}")
+        if len(possible_moves) > 1:
+            _, move = self.go_down(
+                0,
+                board.copy_game(),
+                board.get_turn(),
+                -sys.maxsize,
+                sys.maxsize,
+            )
+            return move
+        else:
+            return board.get_possible_move()[0]
 
     def evaluate(self, board: othello.OthelloGame, turn: str):
         value = {othello.BLACK: 0, othello.WHITE: 0, othello.NONE: 0}
@@ -109,4 +114,4 @@ class MaximumStoneStrategy:
             return othello.BLACK
 
     def __str__(self):
-        return "Da_Silva_Marti_Ruhoff"
+        return "Maximum Stone"
