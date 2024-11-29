@@ -1,5 +1,4 @@
-""" Example of a random AI. The class name has to be the same as the module name.
-"""
+"""Example of a random AI. The class name has to be the same as the module name."""
 
 from __future__ import (
     annotations,
@@ -34,22 +33,24 @@ class Strategist:
     def __init__(self):
         pass
 
+    def is_border(self, x, y, board):
+        for y_delta in range(-1, 2):
+            for x_delta in range(-1, 2):
+                new_y = y + y_delta
+                new_x = x + x_delta
+                if 0 <= new_y < len(board) and 0 <= new_x < len(board[y]):
+                    if board[new_y][new_x] == othello.NONE:
+                        return 1
+        return 0
+
     def get_border_value(self, game: othello.OthelloGame, player: str):
         value = 0
         board = game.get_board()
         for y in range(len(board)):
             for x in range(len(board[y])):
                 if board[y][x] == player:
-                    try:
-                        for y_delta in range(-1, 2):
-                            for x_delta in range(-1, 2):
-                                try:
-                                    if board[y + y_delta][x + x_delta] == othello.NONE:
-                                        raise NoneCell
-                                except IndexError:
-                                    pass
-                    except NoneCell:
-                        value += 1
+                    value += self.is_border(x, y, board)
+
         return value
 
     def get_other(self, player_turn: str) -> str:
