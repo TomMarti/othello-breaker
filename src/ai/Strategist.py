@@ -6,6 +6,7 @@ from __future__ import (
 import othello
 import sys
 import numpy as np
+import time
 
 MAX_DEPTH = 5
 AVOIDED_CASE = [(1, 1), (7, 1), (1, 5), (7, 5)]
@@ -19,6 +20,8 @@ CORNER_DIRECTION = {
     (0, 6): [(1, 0), (0, -1)],
     (8, 6): [(-1, 0), (0, -1)],
 }
+
+CACHE = {}
 
 
 class NoneCell(Exception):
@@ -43,6 +46,12 @@ class Strategist:
                         return 1
         return 0
 
+    def current_stat_to_string(self, board, move, turn) -> str:
+        string = ""
+        for x in np.array(board).flatten():
+            string += x
+        return string + str(move) + turn
+
     def get_border_value(self, game: othello.OthelloGame, player: str):
         value = 0
         board = game.get_board()
@@ -59,16 +68,18 @@ class Strategist:
     def get_stable_piece(self, game: othello.OthelloGame, player: str):
         value = 0
         board = game.get_board()
-        for cell in CORNER:
-            if cell == player:
+        for corner_cell in CORNER:
+            if board[corner_cell[1]][corner_cell[0]] == player:
                 value += 1
-                for dir in CORNER_DIRECTION:
-                    x = cell[0]
-                    y = cell[1]
-                    while board[x][y] == player:
+                for dir in CORNER_DIRECTION[corner_cell]:
+                    x = corner_cell[0] + dir[0]
+                    y = corner_cell[1] + dir[1]
+                    while board[y][x] == player:
                         value += 1
                         x += dir[0]
-                        x += dir[1]
+                        y += dir[1]
+                        if not (0 <= y < len(board)) or not (0 <= x < len(board[y])):
+                            break
 
         return value
 
@@ -81,43 +92,39 @@ class Strategist:
         Returns:
             tuple[int, int]: the next move (for instance: (2, 3) for (row, column), starting from 0)
         """
+
+        player = board.get_turn()
+
         _, move = self.alpha_beta(
             0,
             board.copy_game(),
             -sys.maxsize,
             sys.maxsize,
-            board.get_turn(),
+            player,
         )
         return move
 
-    def evaluate(self, game: othello.OthelloGame, move, player, turn_number=0) -> float:
-        if move in CORNER:
-            if game.get_turn() == player:
-                return -sys.maxsize
-            else:
-                return sys.maxsize
+    def evaluate(
+        self, game: othello.OthelloGame, move, player_move, player, turn_number=0
+    ) -> float:
 
-        if move in AVOIDED_CASE:
-            if game.get_turn() == player:
-                return sys.maxsize
-            else:
-                return -sys.maxsize
+        current_state_hash = self.current_stat_to_string(
+            game.get_board(), move, player_move
+        )
 
-        other = self.get_other(player)
+        if current_state_hash in CACHE:
+            return CACHE[current_state_hash]
 
-        if not any(map(lambda x: x == player, np.array(game.get_board()).flatten())):
-            return -sys.maxsize
-
-        if not any(map(lambda x: x == other, np.array(game.get_board()).flatten())):
-            return sys.maxsize
-
-        mobility_value = len(game.get_possible_move())
+        mobility_value = len(set(game.get_possible_move()))
         border_piece = self.get_border_value(game, player)
         stable_piece = self.get_stable_piece(game, player)
+        # if turn_number < 7:
+        #     value = mobility_value * 20 + 1 / (1 + border_piece) + stable_piece * 10
+        # else:
+        value = mobility_value + 1 / (1 + border_piece) + stable_piece * 20
 
-        result = mobility_value + 1 / (1 + border_piece) + stable_piece * 4
-
-        return result
+        CACHE[current_state_hash] = value
+        return value
 
     def alpha_beta(
         self,
@@ -130,10 +137,14 @@ class Strategist:
         turn_number: int = 0,
     ) -> tuple[int, tuple[int, int]]:
         if move is not None:
+            player_move = game.get_turn()
             game.move(move[0], move[1])
 
         if depth > MAX_DEPTH:
-            return (self.evaluate(game, move, player, turn_number), move)
+            return (
+                self.evaluate(game, move, player_move, player, turn_number),
+                move,
+            )
 
         new_depth = depth + 1
         return_move = None
