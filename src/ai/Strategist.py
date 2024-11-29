@@ -54,10 +54,7 @@ class Strategist:
         return value
 
     def get_other(self, player_turn: str) -> str:
-        if player_turn == othello.BLACK:
-            return othello.WHITE
-        else:
-            return othello.BLACK
+        return othello.BLACK if player_turn == othello.WHITE else othello.WHITE
 
     def get_stable_piece(self, game: othello.OthelloGame, player: str):
         value = 0
