@@ -64,7 +64,6 @@ class Strategist:
         return othello.BLACK if player_turn == othello.WHITE else othello.WHITE
 
     def get_stable_piece(self, game: othello.OthelloGame, player: str):
-
         board = game.get_board()
         board_len = len(board)
         stable = np.full((board_len, len(board[-1])), False, dtype=bool)
