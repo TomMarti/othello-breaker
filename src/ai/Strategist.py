@@ -148,6 +148,7 @@ class Strategist:
                 sys.maxsize,
                 player,
             )
+            print(f"Strategist : {move}")
             return move
         else:
             return board.get_possible_move()[0]
@@ -204,7 +205,6 @@ class Strategist:
 
         is_maximising = game.get_turn() == player
         best_value = -sys.maxsize if is_maximising else sys.maxsize
-        # print(f"Alpha-beta strategist :{game.get_possible_move()}")
         for move in game.get_possible_move():
             result, _ = self.alpha_beta(
                 new_depth,
@@ -230,6 +230,18 @@ class Strategist:
                 if alpha >= best_value:
                     return (best_value, return_move)
                 beta = min(beta, best_value)
+
+        if return_move is None:
+            # print input for debugging
+            print("----------------------------------")
+            print("Strategist crash")
+            print("depth", depth)
+            print("game", game.get_board())
+            print("alpha", alpha)
+            print("beta", beta)
+            print("player", player)
+            print("move", move)
+            print("turn_number", turn_number)
         return (best_value, return_move)
 
     def update_turn(slef, turn):
