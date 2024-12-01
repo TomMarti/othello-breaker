@@ -67,12 +67,16 @@ class MaximumStoneStrategy:
         if depth > MAX_DEPTH:
             return (self.evaluate(game, turn), move)
 
+        if game.is_game_over():
+            return sys.maxsize, move
+
         new_depth = depth + 1
-        return_move = None
+        legal_moves = game.get_possible_move()
+        return_move = legal_moves[0]
 
         if depth % 2 == 1:
             value = sys.maxsize
-            for move in game.get_possible_move():
+            for move in legal_moves:
                 result, _ = self.go_down(
                     new_depth,
                     game.copy_game(),

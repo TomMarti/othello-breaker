@@ -44,9 +44,11 @@ class MaximumStoneStrategyOptimized:
                 -sys.maxsize,
                 sys.maxsize,
             )
-            return move
+            if move is not None:
+                return move
+            return board.get_possible_move()[0]
         else:
-            board.get_possible_move()[0]
+            return board.get_possible_move()[0]
 
     def evaluate(self, board: othello.OthelloGame, turn: str):
         value = {othello.BLACK: 0, othello.WHITE: 0, othello.NONE: 0}
@@ -127,12 +129,15 @@ class MaximumStoneStrategyOptimized:
         if depth > MAX_DEPTH:
             return (self.move_value(game, move), move)
 
+        if game.is_game_over():
+            return sys.maxsize, move
         new_depth = depth + 1
-        return_move = None
+        legal_moves = game.get_possible_move()
+        return_move = legal_moves[0]
 
         if depth % 2 == 1:
             value = sys.maxsize
-            for move in game.get_possible_move():
+            for move in legal_moves:
                 result, _ = self.alpha_beta(
                     new_depth,
                     game.copy_game(),
