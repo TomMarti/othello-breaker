@@ -8,10 +8,7 @@ import sys
 import numpy as np
 
 MAX_DEPTH = 5
-AVOIDED_CASE = [(1, 1), (7, 1), (1, 5), (7, 5)]
 CORNER = [(0, 0), (8, 0), (0, 6), (8, 6)]
-GAME_X = 8
-GAME_Y = 6
 
 CORNER_DIRECTION = {
     (0, 0): [(1, 0), (0, 1)],
@@ -20,85 +17,66 @@ CORNER_DIRECTION = {
     (8, 6): [(-1, 0), (0, -1)],
 }
 
-CORNER_DIAG = {
-    (0, 0): (1, 1),
-    (8, 0): (-1, 1),
-    (0, 6): (1, -1),
-    (8, 6): (-1, -1),
-}
-
 CACHE = {}
 
 
-class ShadyStrategist:
+class Marti_Da_Silva_Ruhoff:
     """The name of this class must be the same as its file."""
 
     def __init__(self):
         pass
 
-    def is_border(self, x, y, board):
-        for y_delta in range(-1, 2):
-            for x_delta in range(-1, 2):
-                new_y = y + y_delta
-                new_x = x + x_delta
-                if 0 <= new_y < len(board) and 0 <= new_x < len(board[y]):
-                    if board[new_y][new_x] == othello.NONE:
-                        return 1
-        return 0
+    def current_stat_to_string(self, board) -> str:
+        """
+        Function used to create a hash for the cache
+        """
+        return np.array2string(np.array(board))
 
-    def current_stat_to_string(self, board, move) -> str:
-        string = ""
-        for x in np.array(board).flatten():
-            string += x
-        return string + str(move)
-
-    def get_border_value(self, game: othello.OthelloGame, player: str):
-        value = 0
-        board = game.get_board()
-        for y in range(len(board)):
-            for x in range(len(board[y])):
-                if board[y][x] == player:
-                    value += self.is_border(x, y, board)
-
-        return value
-
-    def get_other(self, player_turn: str) -> str:
+    def get_other_player(self, player_turn: str) -> str:
+        """
+        Return the other player than the one given
+        """
         return othello.BLACK if player_turn == othello.WHITE else othello.WHITE
 
     def get_stable_piece(
         self, game: othello.OthelloGame, player: str
     ) -> tuple[(int, int)]:
+        """
+        Return the count of stable piece for the player and his opponent.
+        A stable piece is a piece that cannot be flipped anymore.
+        """
 
-        other = self.update_turn(player)
+        other = self.get_other_player(player)
         board = game.get_board()
-        board_len = len(board)
-        stable_player = np.full((board_len, len(board[-1])), False, dtype=bool)
-        stable_other = np.full((board_len, len(board[-1])), False, dtype=bool)
 
+        # Genereate a mask for both player of their stable piece
+        stable_player = np.full(
+            (game.get_rows(), game.get_columns()), False, dtype=bool
+        )
+        stable_other = np.full((game.get_rows(), game.get_columns()), False, dtype=bool)
+
+        # Check the border to init stable piece
         for corner_cell in CORNER:
-            if board[corner_cell[1]][corner_cell[0]] == player:
-                stable_player[corner_cell[1]][corner_cell[0]] = True
+            if board[corner_cell[1]][corner_cell[0]] is not None:
+                if board[corner_cell[1]][corner_cell[0]] == player:
+                    stable = stable_player
+                    target = player
+                else:
+                    stable = stable_other
+                    target = other
+
+                stable[corner_cell[1]][corner_cell[0]] = True
                 for dir in CORNER_DIRECTION[corner_cell]:
                     x = corner_cell[0] + dir[0]
                     y = corner_cell[1] + dir[1]
-                    while board[y][x] == player:
-                        stable_player[y][x] = True
-                        x += dir[0]
-                        y += dir[1]
-                        if not (0 <= y < len(board)) or not (0 <= x < len(board[y])):
-                            break
-            if board[corner_cell[1]][corner_cell[0]] == other:
-                stable_other[corner_cell[1]][corner_cell[0]] = True
-                for dir in CORNER_DIRECTION[corner_cell]:
-                    x = corner_cell[0] + dir[0]
-                    y = corner_cell[1] + dir[1]
-                    while board[y][x] == other:
-                        stable_other[y][x] = True
+                    while board[y][x] == target:
+                        stable[y][x] = True
                         x += dir[0]
                         y += dir[1]
                         if not (0 <= y < len(board)) or not (0 <= x < len(board[y])):
                             break
 
+        # A stable piece is a piece that has one stable piece next to it horizontally, vertically and in his diagonal at the same time.
         for y in range(len(board)):
             for x in range(len(board[y])):
                 if board[y][x] is not othello.NONE:
@@ -107,49 +85,55 @@ class ShadyStrategist:
                     else:
                         stable = stable_other
 
+                    # Init flag for each direction
                     stable_hor = False
                     stable_ver = False
                     stable_diag = False
 
+                    # Check horizontally
                     if x > 0:
                         if stable[y][x - 1]:
                             stable_hor = True
                     else:
                         stable_hor = True
 
-                    if x < len(stable[y]) - 1:
+                    if x < game.get_columns() - 1:
                         if stable[y][x + 1]:
                             stable_hor = True
                     else:
                         stable_hor = True
 
+                    # Check vertically
                     if y > 0:
                         if stable[y - 1][x]:
                             stable_ver = True
                     else:
                         stable_ver = True
 
-                    if y < len(stable) - 1:
+                    if y < game.get_rows() - 1:
                         if stable[y + 1][x]:
                             stable_ver = True
                     else:
                         stable_ver = True
 
+                    # Check diagonally
                     if y > 0 and x > 0:
                         if stable[y - 1][x - 1]:
                             stable_diag = True
                     else:
                         stable_diag = True
 
-                    if y < len(stable) - 1 and x < len(stable[y]) - 1:
+                    if y < game.get_rows() - 1 and x < game.get_columns() - 1:
                         if stable[y + 1][x]:
                             stable_diag = True
                     else:
                         stable_diag = True
 
+                    # If the piece has one stable piece horizontally, vertically and diagonally at same time, it's stable itself
                     if stable_diag and stable_hor and stable_ver:
                         stable[y][x] = True
 
+        # Count the number of stable piece in the mask
         return np.count_nonzero(stable_player), np.count_nonzero(stable_other)
 
     def next_move(self, board: othello.OthelloGame) -> tuple[int, int]:
@@ -164,6 +148,7 @@ class ShadyStrategist:
 
         player = board.get_turn()
         possible_moves = set(board.get_possible_move())
+        # Check if there is more than one possible move. If not, return the only move possible (optimize time reflexion)
         if len(possible_moves) > 1:
             _, move = self.alpha_beta(
                 0,
@@ -176,13 +161,17 @@ class ShadyStrategist:
         else:
             return board.get_possible_move()[0]
 
-    def evaluate(self, game: othello.OthelloGame, move, player) -> float:
-
-        current_state_hash = self.current_stat_to_string(game.get_board(), move)
+    def evaluate(self, game: othello.OthelloGame, player) -> float:
+        """
+        Function that return a score based on the actual board
+        """
+        # Check if the board has already been calculated
+        current_state_hash = self.current_stat_to_string(game.get_board())
 
         if current_state_hash in CACHE:
             return CACHE[current_state_hash]
 
+        # Count the mobility for both player
         if game.get_turn() == player:
             own_mobility_value = len(set(game.get_possible_move()))
             game.switch_turn()
@@ -194,13 +183,20 @@ class ShadyStrategist:
 
         own_stable_piece, other_stable_piece = self.get_stable_piece(game, player)
 
+        # The factor for each value have been set by trial
+        OWN_STABLE_FACTOR = 5
+        OTHER_STABLE_FACTOR = 10
+        OWN_MOBILITY_FACTOR = 1
+        OTHER_MOBILITY_FACTOR = 2
+
         value = (
-            5 * own_stable_piece
-            - 10 * other_stable_piece
-            + own_mobility_value
-            - 2 * other_mobility_value
+            OWN_STABLE_FACTOR * own_stable_piece
+            - OTHER_STABLE_FACTOR * other_stable_piece
+            + OWN_MOBILITY_FACTOR * own_mobility_value
+            - OTHER_MOBILITY_FACTOR * other_mobility_value
         )
 
+        # set the value in the cache
         CACHE[current_state_hash] = value
         return value
 
@@ -214,15 +210,19 @@ class ShadyStrategist:
         move: tuple[int, int] = None,
         turn_number: int = 0,
     ) -> tuple[int, tuple[int, int]]:
+        """
+        This is the alpha-beta algorithms
+        """
         if move is not None:
             game.move(move[0], move[1])
 
         if depth > MAX_DEPTH:
             return (
-                self.evaluate(game, move, player),
+                self.evaluate(game, player),
                 move,
             )
 
+        # Check if the game is winned by a player and return the corresponding value
         if game.is_game_over():
             if game.return_winner() == player:
                 return sys.maxsize, move
@@ -237,6 +237,7 @@ class ShadyStrategist:
         is_maximising = game.get_turn() == player
         best_value = -sys.maxsize if is_maximising else sys.maxsize
 
+        # check all the moves
         for move in legal_moves:
             result, _ = self.alpha_beta(
                 new_depth,
@@ -267,11 +268,5 @@ class ShadyStrategist:
                 beta = min(beta, best_value)
         return (best_value, return_move)
 
-    def update_turn(slef, turn):
-        if turn == othello.BLACK:
-            return othello.WHITE
-        else:
-            return othello.BLACK
-
     def __str__(self):
-        return "ShadyStrategist "
+        return "Marti_Da_Silva_Ruhoff "

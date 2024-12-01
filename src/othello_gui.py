@@ -14,7 +14,7 @@ DEFAULT_COLUMNS = 9
 BACKGROUND_COLOR = othello_models.BACKGROUND_COLOR
 GAME_HEIGHT = 400
 GAME_WIDTH = 400
-WAITING_TIME = 100  # 500 # adding an extra time in ms to better see the development
+WAITING_TIME = 500  # adding an extra time in ms to better see the development
 
 
 class OthelloGUI:

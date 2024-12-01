@@ -63,19 +63,35 @@ class Strategist:
         """
         return othello.BLACK if player_turn == othello.WHITE else othello.WHITE
 
-    def get_stable_piece(self, game: othello.OthelloGame, player: str):
+    def get_stable_piece(
+        self, game: othello.OthelloGame, player: str
+    ) -> tuple[(int, int)]:
+
+        other = self.update_turn(player)
         board = game.get_board()
         board_len = len(board)
-        stable = np.full((board_len, len(board[-1])), False, dtype=bool)
+        stable_player = np.full((board_len, len(board[-1])), False, dtype=bool)
+        stable_other = np.full((board_len, len(board[-1])), False, dtype=bool)
 
         for corner_cell in CORNER:
             if board[corner_cell[1]][corner_cell[0]] == player:
-                stable[corner_cell[1]][corner_cell[0]] = True
+                stable_player[corner_cell[1]][corner_cell[0]] = True
                 for dir in CORNER_DIRECTION[corner_cell]:
                     x = corner_cell[0] + dir[0]
                     y = corner_cell[1] + dir[1]
                     while board[y][x] == player:
-                        stable[y][x] = True
+                        stable_player[y][x] = True
+                        x += dir[0]
+                        y += dir[1]
+                        if not (0 <= y < len(board)) or not (0 <= x < len(board[y])):
+                            break
+            if board[corner_cell[1]][corner_cell[0]] == other:
+                stable_other[corner_cell[1]][corner_cell[0]] = True
+                for dir in CORNER_DIRECTION[corner_cell]:
+                    x = corner_cell[0] + dir[0]
+                    y = corner_cell[1] + dir[1]
+                    while board[y][x] == other:
+                        stable_other[y][x] = True
                         x += dir[0]
                         y += dir[1]
                         if not (0 <= y < len(board)) or not (0 <= x < len(board[y])):
@@ -83,10 +99,15 @@ class Strategist:
 
         for y in range(len(board)):
             for x in range(len(board[y])):
-                if board[y][x] == player:
-                    stable_hor = True
-                    stable_ver = True
-                    stable_diag = True
+                if board[y][x] is not othello.NONE:
+                    if board[y][x] == player:
+                        stable = stable_player
+                    else:
+                        stable = stable_other
+
+                    stable_hor = False
+                    stable_ver = False
+                    stable_diag = False
 
                     if x > 0:
                         if stable[y][x - 1]:
@@ -97,6 +118,8 @@ class Strategist:
                     if x < len(stable[y]) - 1:
                         if stable[y][x + 1]:
                             stable_hor = True
+                    else:
+                        stable_hor = True
 
                     if y > 0:
                         if stable[y - 1][x]:
@@ -125,7 +148,7 @@ class Strategist:
                     if stable_diag and stable_hor and stable_ver:
                         stable[y][x] = True
 
-        return np.count_nonzero(stable)
+        return np.count_nonzero(stable_player), np.count_nonzero(stable_other)
 
     def next_move(self, board: othello.OthelloGame) -> tuple[int, int]:
         """Returns the next move to play.
@@ -139,7 +162,6 @@ class Strategist:
 
         player = board.get_turn()
         possible_moves = set(board.get_possible_move())
-        print(f"Strategist : {possible_moves}")
         if len(possible_moves) > 1:
             _, move = self.alpha_beta(
                 0,
@@ -148,7 +170,6 @@ class Strategist:
                 sys.maxsize,
                 player,
             )
-            print(f"Strategist : {move}")
             return move
         else:
             return board.get_possible_move()[0]
@@ -163,13 +184,7 @@ class Strategist:
         if current_state_hash in CACHE:
             return CACHE[current_state_hash]
 
-        mobility_value = len(set(game.get_possible_move()))
-        border_piece = self.get_border_value(game, player)
-        stable_piece = self.get_stable_piece(game, player)
-        # if turn_number < 7:
-        #     value = mobility_value * 20 + 1 / (1 + border_piece) + stable_piece * 10
-        # else:
-        value = stable_piece  # mobility_value + 1 / (1 + border_piece) +
+        value, _ = self.get_stable_piece(game, player)
 
         CACHE[current_state_hash] = value
         return value
@@ -182,7 +197,6 @@ class Strategist:
         beta: int,
         player: str,
         move: tuple[int, int] = None,
-        turn_number: int = 0,
     ) -> tuple[int, tuple[int, int]]:
         if move is not None:
             player_move = game.get_turn()
@@ -190,7 +204,7 @@ class Strategist:
 
         if depth > MAX_DEPTH:
             return (
-                self.evaluate(game, move, player_move, player, turn_number),
+                self.evaluate(game, move, player_move, player),
                 move,
             )
 
@@ -201,19 +215,15 @@ class Strategist:
                 return -sys.maxsize, move
 
         new_depth = depth + 1
-        return_move = None
+
+        legal_moves = game.get_possible_move()
+        return_move = legal_moves[0]
 
         is_maximising = game.get_turn() == player
         best_value = -sys.maxsize if is_maximising else sys.maxsize
         for move in game.get_possible_move():
             result, _ = self.alpha_beta(
-                new_depth,
-                game.copy_game(),
-                alpha,
-                beta,
-                player,
-                move,
-                turn_number=turn_number + 1,
+                new_depth, game.copy_game(), alpha, beta, player, move
             )
 
             if is_maximising:
@@ -230,18 +240,6 @@ class Strategist:
                 if alpha >= best_value:
                     return (best_value, return_move)
                 beta = min(beta, best_value)
-
-        if return_move is None:
-            # print input for debugging
-            print("----------------------------------")
-            print("Strategist crash")
-            print("depth", depth)
-            print("game", game.get_board())
-            print("alpha", alpha)
-            print("beta", beta)
-            print("player", player)
-            print("move", move)
-            print("turn_number", turn_number)
         return (best_value, return_move)
 
     def update_turn(slef, turn):
