@@ -24,7 +24,6 @@ class Random:
         """
 
         legal_moves = board.get_possible_move()
-        print(f"Random : {legal_moves}")
         return random.choice(legal_moves)
 
     def __str__(self):

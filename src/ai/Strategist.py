@@ -66,7 +66,6 @@ class Strategist:
     def get_stable_piece(
         self, game: othello.OthelloGame, player: str
     ) -> tuple[(int, int)]:
-
         other = self.update_turn(player)
         board = game.get_board()
         board_len = len(board)

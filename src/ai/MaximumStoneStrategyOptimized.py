@@ -1,5 +1,4 @@
-""" Example of a random AI. The class name has to be the same as the module name.
-"""
+"""Example of a random AI. The class name has to be the same as the module name."""
 
 from __future__ import (
     annotations,
@@ -37,7 +36,6 @@ class MaximumStoneStrategyOptimized:
             tuple[int, int]: the next move (for instance: (2, 3) for (row, column), starting from 0)
         """
         possible_moves = set(board.get_possible_move())
-        print(f"Maximum Stone Optimized: {possible_moves}")
         if len(possible_moves) > 1:
             _, move = self.alpha_beta(
                 0,
