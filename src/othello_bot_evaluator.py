@@ -1,5 +1,6 @@
 import time
 from ai.Marti_Da_Silva_Ruhoff import Marti_Da_Silva_Ruhoff
+from ai.MaximumStoneStrategy import MaximumStoneStrategy
 from ai.MaximumStoneStrategyOptimized import MaximumStoneStrategyOptimized
 from ai.Random import Random
 from ai.Strategist import Strategist
@@ -21,7 +22,7 @@ class OthelloBotEvaluator:
             "avg_moves_per_game": 0.0,
             "corner_capture_rate": 0.0,
             "avg_move_time": 0.0,
-            "skipped_turns_rate": 0.0,  # New metric for skipped turns
+            "skipped_turns_rate": 0.0,
             "per_opponent_results": [],
         }
 
@@ -240,8 +241,14 @@ class OthelloBotEvaluator:
 
 if __name__ == "__main__":
     evaluator = OthelloBotEvaluator(
-        [Random(), MaximumStoneStrategyOptimized(), Strategist()]
+        [
+            Random(),
+            MaximumStoneStrategy(),
+            MaximumStoneStrategyOptimized(),
+            Strategist(),
+        ]
     )
+
     ai = Marti_Da_Silva_Ruhoff()
-    evaluator.evaluate(ai, 10)
+    evaluator.evaluate(ai, 2)
     evaluator.print_results()
